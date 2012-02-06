@@ -6,5 +6,5 @@ sys.path.insert(0, '/var/lib/tomcat6/webapps/hudson/jobs/rdfextras')
 
 plugin.register(
         'PostgreSQL', store.Store,
-        'rdfextras.store.PostgreSQL', 'PostgreSQL')
+        'rdflib_postgresql.PostgreSQL', 'PostgreSQL')
 
