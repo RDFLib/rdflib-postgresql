@@ -4,7 +4,7 @@ except ImportError:
     from nose.exc import SkipTest
     raise SkipTest("psycopg2 not installed")
 
-from nose.exc import SkipTest
+from nose import SkipTest
 from tempfile import mkdtemp
 from tempfile import mkstemp
 import unittest
@@ -30,8 +30,8 @@ class PostgreSQLGraphTestCase(test_graph.GraphTestCase):
     path = configString
     create = True
 
-    def testStatementNode(self):
-        raise SkipTest("Known issue.")
+    # def testStatementNode(self):
+    #     raise SkipTest("Known issue.")
 
 class PostgreSQLContextTestCase(test_context.ContextTestCase):
     store_name = "PostgreSQL"
@@ -39,11 +39,11 @@ class PostgreSQLContextTestCase(test_context.ContextTestCase):
     path = configString
     create = True
 
-    def testLenInMultipleContexts(self):
-        raise SkipTest("Known issue.")
+    # def testLenInMultipleContexts(self):
+    #     raise SkipTest("Known issue.")
 
-    def testConjunction(self):
-        raise SkipTest("Known issue.")
+    # def testConjunction(self):
+    #     raise SkipTest("Known issue.")
 
 class PostgreSQLStoreTests(unittest.TestCase):
     storetest = True
@@ -79,7 +79,7 @@ class PostgreSQLStoreTests(unittest.TestCase):
         testN3Store('PostgreSQL',configString)
 
     def testRegex(self):
-        raise SkipTest("Known issue.")
+        # raise SkipTest("Known issue.")
         g = self.graph
         g.parse(data=testN3, format="n3")
         try:
