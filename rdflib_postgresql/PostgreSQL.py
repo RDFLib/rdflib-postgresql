@@ -746,8 +746,9 @@ class PostgreSQL(AbstractSQLStore):
                             or not isinstance(item,int) and u"'%s'" % item
                             or item
                             for item in params])
-            print("qStr", qStr)
-            print("params", params)
+            # print("qStr", qStr)
+            # print("params", params)
+            # print("query", qStr%params)
             cursor.execute(qStr%params)
     
     def buildGenericClause(self, generic, value, tableName):

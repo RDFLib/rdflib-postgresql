@@ -28,7 +28,7 @@ class StoreTestCase(unittest.TestCase):
         
         self.graph = Graph(store=self.store)
         from test_postgresql import configString
-        from rdfextras.store.PostgreSQL import PostgreSQL
+        from rdflib_postgresql.PostgreSQL import PostgreSQL
         path=configString
         PostgreSQL().destroy(path)
         self.path = path
