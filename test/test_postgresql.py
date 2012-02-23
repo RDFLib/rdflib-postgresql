@@ -1,13 +1,13 @@
 from nose import SkipTest
 import unittest
-import test_graph
-import test_context
-from test_n3_2 import testN3Store
+import graph_case
+import context_case
+from n3_2_case import testN3Store
 from rdflib.graph import Graph
 
 configString="user=gjh,password=50uthf0rk,host=localhost,db=test"
 
-class PostgreSQLGraphTestCase(test_graph.GraphTestCase):
+class PostgreSQLGraphTestCase(graph_case.GraphTestCase):
     store_name = "PostgreSQL"
     storetest = True
     path = configString
@@ -16,7 +16,7 @@ class PostgreSQLGraphTestCase(test_graph.GraphTestCase):
     def testStatementNode(self):
         raise SkipTest("RDF Statements not supported in AbstractSQLStore")
 
-class PostgreSQLContextTestCase(test_context.ContextTestCase):
+class PostgreSQLContextTestCase(context_case.ContextTestCase):
     store_name = "PostgreSQL"
     storetest = True
     path = configString
