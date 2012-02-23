@@ -48,12 +48,14 @@ from rdfextras.store.AbstractSQLStore import FULL_TRIPLE_PARTITIONS
 from rdfextras.store.AbstractSQLStore import table_name_prefixes
 from rdfextras.store.AbstractSQLStore import AbstractSQLStore
 from rdfextras.store.AbstractSQLStore import extractTriple
+from rdflib.py3compat import b, PY3
 from rdflib.store import NO_STORE
 from rdflib.store import VALID_STORE
 import logging
 logging.basicConfig(level=logging.ERROR,format="%(message)s")
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.ERROR)
+def bb(u): return u.encode('utf-8')
 
 Any = None
 
@@ -82,7 +84,7 @@ def GetConfigurationString(configuration):
     Given a config-form string, return a dsn-form string
     """
     configDict = ParseConfigurationString(configuration)
-    
+
     dsn = "dbname=%s user=%s password=%s" % (configDict['db'], configDict['user'], configDict['password'])
     if configDict.has_key('port'):
         try:
@@ -90,7 +92,7 @@ def GetConfigurationString(configuration):
             dsn += " port=%s" % port
         except:
             raise ArithmeticError('PostgreSQL port must be a valid integer')
-    
+
     return dsn
 
 
@@ -110,7 +112,7 @@ def unionSELECT(selectComponents,distinct=False,selectType=TRIPLE_SELECT):
     """
     selects = []
     for tableName,tableAlias,whereClause,tableType in selectComponents:
-        
+
         if selectType == COUNT_SELECT:
             selectString = "select count(*)"
             tableSource = " from %s "%tableName
@@ -128,9 +130,9 @@ def unionSELECT(selectComponents,distinct=False,selectType=TRIPLE_SELECT):
             selectString =\
             """select *,NULL as objLanguage, NULL as objDatatype"""
             tableSource = " from %s as %s "%(tableName,tableAlias)
-        
+
         selects.append(selectString + tableSource + whereClause)
-    
+
     orderStmt = ''
     if selectType == TRIPLE_SELECT:
         orderStmt = ' order by subject,predicate,object'
@@ -142,13 +144,13 @@ def unionSELECT(selectComponents,distinct=False,selectType=TRIPLE_SELECT):
 
 class PostgreSQL(AbstractSQLStore):
     """
-    PostgreSQL store formula-aware implementation.  It stores its triples in 
+    PostgreSQL store formula-aware implementation.  It stores its triples in
     the following partitions, as per AbstractSQLStore:
-    
+
     * Asserted non rdf:type statements
     * Asserted rdf:type statements (in a table which models Class membership) - The motivation for this partition is primarily query speed and scalability as most graphs will always have more rdf:type statements than others
     * All Quoted statements
-    
+
     In addition it persists namespace mappings in a seperate table
     """
     context_aware = True
@@ -161,9 +163,6 @@ class PostgreSQL(AbstractSQLStore):
     def __init__(self):
         self._Store__node_pickler = None
         super(PostgreSQL, self).__init__()
-
-    def __repr__(self):
-        return "<Partitioned PostgreSQL N3 Store>"
 
     def open(self, configuration, create=True):
         """
@@ -181,7 +180,7 @@ class PostgreSQL(AbstractSQLStore):
             if create:
                 #sys.stderr.write("Calling init_db\n")
                 self.init_db(configuration=configuration)
-            
+
             if self.db_exists(configuration=configuration):
                 #sys.stderr.write("Returning VALID_STORE\n")
                 return VALID_STORE
@@ -193,7 +192,7 @@ class PostgreSQL(AbstractSQLStore):
             #sys.stderr.write("Returning NO_STORE\n")
             return NO_STORE
         #sys.stderr.write("'open' returning\n")
-    
+
     def db_exists(self, configuration=None):
         #sys.stderr.write("Entering 'db_exists'\n")
         if not self._db:
@@ -207,7 +206,7 @@ class PostgreSQL(AbstractSQLStore):
                 sys.stderr.write("table %s Doesn't exist\n" % (tn))
                 return 0
         return 1
-    
+
     def init_db(self, configuration=None):
         # sys.stderr.write("Entering 'init_db'\n")
         if not self.db_exists(configuration=configuration):
@@ -233,8 +232,8 @@ class PostgreSQL(AbstractSQLStore):
                     sys.stderr.write("unable to clear table: %s (%s)\n" % (fullname, errmsg))
         c.close()
         self._db.commit()
-        
-    
+
+
     def destroy(self, configuration):
         """
         Opposite of init_db, takes a config string
@@ -272,10 +271,10 @@ class PostgreSQL(AbstractSQLStore):
         # sys.stderr.write("calling db.close'\n")
         # db.close()
         # sys.stderr.write("Leaving 'destroy'\n")
-        
+
         _logger.debug("Destroyed Close World Universe %s in PostgreSQL database %s" % \
                     (self.identifier, configuration))
-    
+
     def EscapeQuotes(self, qstr):
         """
         Overridden because PostgreSQL is in its own quoting world
@@ -284,7 +283,7 @@ class PostgreSQL(AbstractSQLStore):
             return ''
         tmp = qstr.replace("'", "''")
         return tmp
-    
+
     # copied and pasted primarily to use the local unionSELECT instead
     # of the one provided by AbstractSQLStore
     def triples(self, (subject, predicate, obj), context=None):
@@ -292,30 +291,30 @@ class PostgreSQL(AbstractSQLStore):
         A generator over all the triples matching pattern. Pattern can
         be any objects for comparing against nodes in the store, for
         example, RegExLiteral, Date? DateRange?
-        
+
         .. sourcecode:: text
-        
+
             quoted table:                <id>_quoted_statements
             asserted rdf:type table:     <id>_type_statements
             asserted non rdf:type table: <id>_asserted_statements
-        
-            triple columns: subject, predicate, object, context, termComb, 
+
+            triple columns: subject, predicate, object, context, termComb,
                             objLanguage,objDatatype
             class membership columns: member, klass, context termComb
-        
+
         FIXME:  These union all selects *may* be further optimized by joins
-        
+
         """
         quoted_table="%s_quoted_statements"%self._internedId
         asserted_table="%s_asserted_statements"%self._internedId
         asserted_type_table="%s_type_statements"%self._internedId
         literal_table = "%s_literal_statements"%self._internedId
         c=self._db.cursor()
-        
+
         parameters = []
-        
+
         if predicate == RDF.type:
-            # select from asserted rdf:type partition and quoted table (if a 
+            # select from asserted rdf:type partition and quoted table (if a
             # context is specified)
             clauseString,params = self.buildClause(
                         'typeTable',subject,RDF.type, obj,context,True)
@@ -328,7 +327,7 @@ class PostgreSQL(AbstractSQLStore):
                   ASSERTED_TYPE_PARTITION
                 ),
             ]
-        
+
         elif isinstance(predicate,REGEXTerm) \
                 and predicate.compiledExpr.match(RDF.type) \
                 or not predicate:
@@ -363,7 +362,7 @@ class PostgreSQL(AbstractSQLStore):
                   clauseString,
                   ASSERTED_NON_TYPE_PARTITION
                 ))
-            
+
             clauseString,params = self.buildClause(
                     'typeTable',subject,RDF.type,obj,context,True)
             parameters.extend(params)
@@ -375,10 +374,10 @@ class PostgreSQL(AbstractSQLStore):
                   ASSERTED_TYPE_PARTITION
                 )
             )
-        
+
         elif predicate:
             # select from asserted non rdf:type partition (optionally), quoted
-            # partition (if context is speciied), and literal partition 
+            # partition (if context is speciied), and literal partition
             # (optionally)
             selects = []
             if not self.STRONGLY_TYPED_TERMS \
@@ -408,7 +407,7 @@ class PostgreSQL(AbstractSQLStore):
                   clauseString,
                   ASSERTED_NON_TYPE_PARTITION
                 ))
-        
+
         if context is not None:
             clauseString,params = self.buildClause(
                                 'quoted',subject,predicate, obj,context)
@@ -421,7 +420,7 @@ class PostgreSQL(AbstractSQLStore):
                   QUOTED_PARTITION
                 )
             )
-        
+
         q=self._normalizeSQLCmd(unionSELECT(selects))
         self.executeSQL(c,q,parameters)
         rt = c.fetchone()
@@ -442,7 +441,7 @@ class PostgreSQL(AbstractSQLStore):
                 sameTriple = next and \
                     extractTriple(next,self,context)[:3] == (s,p,o)
             yield (s,p,o),(c for c in contexts)
-    
+
     def __repr__(self):
         """
         Copied and pasted primarily to use the local unionSELECT instead
@@ -453,7 +452,7 @@ class PostgreSQL(AbstractSQLStore):
         asserted_table="%s_asserted_statements"%self._internedId
         asserted_type_table="%s_type_statements"%self._internedId
         literal_table = "%s_literal_statements"%self._internedId
-        
+
         selects = [
             (
               asserted_type_table,
@@ -490,7 +489,7 @@ class PostgreSQL(AbstractSQLStore):
         #        "property/value assertions, and %s other assertions>" % \
         #                 (len([c for c in self.contexts()]),
         #                  typeLen, quotedLen, literalLen, assertedLen)
-    
+
         return "<Parititioned PostgreSQL N3 Store>"
 
     def __len__(self, context=None):
@@ -504,30 +503,30 @@ class PostgreSQL(AbstractSQLStore):
         asserted_table="%s_asserted_statements"%self._internedId
         asserted_type_table="%s_type_statements"%self._internedId
         literal_table = "%s_literal_statements"%self._internedId
-        
+
         parameters = []
         quotedContext = assertedContext = typeContext = literalContext = None
-        
+
         clauseParts = self.buildContextClause(context,quoted_table)
         if clauseParts:
             quotedContext,params = clauseParts
             parameters.extend([p for p in params if p])
-        
+
         clauseParts = self.buildContextClause(context,asserted_table)
         if clauseParts:
             assertedContext,params = clauseParts
             parameters.extend([p for p in params if p])
-        
+
         clauseParts = self.buildContextClause(context,asserted_type_table)
         if clauseParts:
             typeContext ,params = clauseParts
             parameters.extend([p for p in params if p])
-        
+
         clauseParts = self.buildContextClause(context,literal_table)
         if clauseParts:
             literalContext,params = clauseParts
             parameters.extend([p for p in params if p])
-        
+
         if context is not None:
             selects = [
                 (
@@ -578,25 +577,25 @@ class PostgreSQL(AbstractSQLStore):
                 ),
             ]
             q=unionSELECT(selects,distinct=False,selectType=COUNT_SELECT)
-        
+
         self.executeSQL(c,self._normalizeSQLCmd(q),parameters)
         rt=c.fetchall()
         c.close()
         return reduce(lambda x,y: x+y,  [rtTuple[0] for rtTuple in rt])
-    
+
     def contexts(self, triple=None):
         """
         This is taken from AbstractSQLStore, and modified, specifically
         to not query quoted_statements. The comments in the original
         indicate that quoted_statements were queried conditionally, but
         the code does otherwise.
-        
+
         As far as i can tell, quoted_statements contains formulae, which
         should not be returned as valid global contexts (at least, as per
         the in-memory and MySQL store implementations), so those queries
         have been completely excised until a case is made that they are
         necessary.
-        
+
         It's reasonable that the AbstractSQLStore implementation is closer
         to the original design, but this conforms to working implementations.
         """
@@ -604,9 +603,9 @@ class PostgreSQL(AbstractSQLStore):
         asserted_table="%s_asserted_statements"%self._internedId
         asserted_type_table="%s_type_statements"%self._internedId
         literal_table = "%s_literal_statements"%self._internedId
-        
+
         parameters = []
-        
+
         if triple is not None:
             subject,predicate,obj=triple
             if predicate == RDF.type:
@@ -622,11 +621,11 @@ class PostgreSQL(AbstractSQLStore):
                       ASSERTED_TYPE_PARTITION
                     ),
                 ]
-            
+
             elif isinstance(predicate,REGEXTerm) and \
                     predicate.compiledExpr.match(RDF.type) or not predicate:
-                # Select from literal partition if (obj is Literal or None) 
-                # and asserted non rdf:type partition (if obj is URIRef or 
+                # Select from literal partition if (obj is Literal or None)
+                # and asserted non rdf:type partition (if obj is URIRef or
                 # None)
                 clauseString,params = self.buildClause(
                         'typeTable',subject,RDF.type,obj,Any,True)
@@ -639,7 +638,7 @@ class PostgreSQL(AbstractSQLStore):
                       ASSERTED_TYPE_PARTITION
                     ),
                 ]
-                
+
                 if not self.STRONGLY_TYPED_TERMS or isinstance(obj,Literal) \
                         or not obj \
                         or (self.STRONGLY_TYPED_TERMS and \
@@ -665,9 +664,9 @@ class PostgreSQL(AbstractSQLStore):
                       clauseString,
                       ASSERTED_NON_TYPE_PARTITION
                     ))
-            
+
             elif predicate:
-                # select from asserted non rdf:type partition (optionally) 
+                # select from asserted non rdf:type partition (optionally)
                 # and literal partition (optionally)
                 selects = []
                 if not self.STRONGLY_TYPED_TERMS or isinstance(obj,Literal) \
@@ -696,7 +695,7 @@ class PostgreSQL(AbstractSQLStore):
                       clauseString,
                       ASSERTED_NON_TYPE_PARTITION
                 ))
-            
+
             q=unionSELECT(selects,distinct=True,selectType=CONTEXT_SELECT)
         else:
             selects = [
@@ -720,37 +719,42 @@ class PostgreSQL(AbstractSQLStore):
                 ),
             ]
             q=unionSELECT(selects,distinct=True,selectType=CONTEXT_SELECT)
-        
+
         self.executeSQL(c,self._normalizeSQLCmd(q),parameters)
         rt=c.fetchall()
         for contextId in [x[0] for x in rt]:
             yield Graph(self, URIRef(contextId))
         c.close()
-    
+
     # overridden for quote-character reasons
     def executeSQL(self,cursor,qStr,params=None,paramList=False):
         """
-        This takes the query string and parameters and (depending on the SQL 
+        This takes the query string and parameters and (depending on the SQL
         implementation) either fill in the parameter in-place or pass it on to
-        the Python DB impl (if it supports this). The default (here) is to 
-        fill the parameters in-place surrounding each param with quote 
+        the Python DB impl (if it supports this). The default (here) is to
+        fill the parameters in-place surrounding each param with quote
         characters
         """
+        def prepitem(item):
+            if isinstance(item, int) or item == 'NULL':
+                return item
+            else:
+                try:
+                    return u"$$%s$$" % item.decode('utf-8')
+                except:
+                    return u"$$%s$$" % item
         if not params:
             cursor.execute(unicode(qStr))
         elif paramList:
             raise Exception("Not supported!")
         else:
-            # @@FIXME: u"'%s'" % item fails for Statements
-            params = tuple([item == 'NULL' and item
-                            or not isinstance(item,int) and u"'%s'" % item
-                            or item
-                            for item in params])
-            # print("qStr", qStr)
-            # print("params", params)
-            # print("query", qStr%params)
-            cursor.execute(qStr%params)
-    
+
+            params = tuple([prepitem(item) for item in params])
+            querystr = unicode(qStr).replace('"',"'")
+            qs = querystr%params
+            print(qs)
+            cursor.execute(qs)
+
     def buildGenericClause(self, generic, value, tableName):
         """
         New method abstracting much cut/paste code from AbstractSQLStore.
@@ -786,28 +790,43 @@ class PostgreSQL(AbstractSQLStore):
         else:
             return value is not None and "%s=" % (tableName and '%s.%s' % \
                 (tableName, generic) or generic) + "%s", [value] or None
-    
+
+    def _normalizeSQLCmd(self, cmd):
+        """
+        Normalize a SQL command before executing it.
+        """
+        if PY3:
+            if not isinstance(cmd, str):
+                cmd = str(cmd, 'ascii')
+            return cmd
+        else:
+            #   Commence unicode black magic
+            import types
+            if not isinstance(cmd, types.UnicodeType):
+                cmd = unicode(cmd, 'ascii')
+            return cmd.encode('utf-8')
+
     def buildSubjClause(self,subject,tableName):
         return self.buildGenericClause("subject", subject, tableName)
-    
+
     def buildPredClause(self,predicate,tableName):
         return self.buildGenericClause("predicate", predicate, tableName)
-    
+
     def buildObjClause(self,obj,tableName):
         return self.buildGenericClause("object", obj, tableName)
-    
+
     def buildContextClause(self,context,tableName):
         context = context is not None \
                             and self.normalizeTerm(context.identifier) \
                             or context
         return self.buildGenericClause("context", context, tableName)
-    
+
     def buildTypeMemberClause(self,subject,tableName):
         return self.buildGenericClause("member", subject, tableName)
-    
+
     def buildTypeClassClause(self,obj,tableName):
         return self.buildGenericClause("klass", obj, tableName)
-    
+
 
 
 CREATE_ASSERTED_STATEMENTS_TABLE = """\
