@@ -70,13 +70,21 @@ def ParseConfigurationString(config_string):
     host
     port (optional - defaults to 5432)
     """
-    kvDict = dict([(part.split('=')[0],part.split('=')[-1]) for part in config_string.split(',')])
-    for requiredKey in ['user','db']:
+    parts = config_string.split(',')
+    parts = (part.split('=', 1) for part in parts)
+    parts = ((k.strip(), v.strip()) for (k, v) in parts)
+    kvDict = dict(parts)
+
+    for requiredKey in ('user', 'db'):
         assert requiredKey in kvDict
-    if 'port' not in kvDict:
-        kvDict['port']=5432
-    if 'password' not in kvDict:
-        kvDict['password']=''
+    if 'port' in kvDict:
+        try:
+            kvDict['port'] = int(kvDict['port'])
+        except:
+            raise RuntimeError('PostgreSQL port must be a valid integer')
+    else:
+        kvDict['port'] = 5432
+    kvDict.setdefault('password', '')
     return kvDict
 
 def GetConfigurationString(configuration):
@@ -85,15 +93,16 @@ def GetConfigurationString(configuration):
     """
     configDict = ParseConfigurationString(configuration)
 
-    dsn = "dbname=%s user=%s password=%s" % (configDict['db'], configDict['user'], configDict['password'])
-    if configDict.has_key('port'):
-        try:
-            port = int(configDict['port'])
-            dsn += " port=%s" % port
-        except:
-            raise ArithmeticError('PostgreSQL port must be a valid integer')
+    dsn = dict(dbname=configDict['db'],
+               user=configDict['user'],
+               password=configDict['password'])
 
-    return dsn
+    for name in ('host', 'port', 'sslmode'):
+        if name in configDict:
+            dsn[name] = configDict.get(name)
+
+    dsn = ('%s=%s' % item for item in dsn.iteritems())
+    return ' '.join(dsn)
 
 
 # Though I appreciate that this was made into a function rather than
