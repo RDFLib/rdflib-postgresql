@@ -5,7 +5,8 @@ import context_case
 from n3_2_case import testN3Store
 from rdflib.graph import Graph
 
-configString="user=gjh,password=50uthf0rk,host=localhost,db=test"
+configString = "user=gjh password=50uthf0rk host=localhost dbname=test"
+
 
 class PostgreSQLGraphTestCase(graph_case.GraphTestCase):
     store_name = "PostgreSQL"
@@ -13,8 +14,6 @@ class PostgreSQLGraphTestCase(graph_case.GraphTestCase):
     path = configString
     create = True
 
-    def testStatementNode(self):
-        raise SkipTest("RDF Statements not supported in AbstractSQLStore")
 
 class PostgreSQLContextTestCase(context_case.ContextTestCase):
     store_name = "PostgreSQL"
@@ -22,11 +21,12 @@ class PostgreSQLContextTestCase(context_case.ContextTestCase):
     path = configString
     create = True
 
-    def testLenInMultipleContexts(self):
-        raise SkipTest("Known issue.")
+    # def testLenInMultipleContexts(self):
+    #     raise SkipTest("Known issue.")
 
-    def testConjunction(self):
-        raise SkipTest("Known issue.")
+    # def testConjunction(self):
+    #     raise SkipTest("Known issue.")
+
 
 class PostgreSQLStoreTests(unittest.TestCase):
     storetest = True
@@ -41,19 +41,9 @@ class PostgreSQLStoreTests(unittest.TestCase):
     def tearDown(self):
         self.graph.destroy(self.path)
         self.graph.close()
-        import os
-        if hasattr(self,'path') and self.path is not None:
-            if os.path.exists(self.path):
-                if os.path.isdir(self.path):
-                    for f in os.listdir(self.path): os.unlink(self.path+'/'+f)
-                    os.rmdir(self.path)
-                elif len(self.path.split(':')) == 1:
-                    os.unlink(self.path)
-                else:
-                    os.remove(self.path)
 
     def test_PostgreSQL_testN3_store(self):
-        testN3Store('PostgreSQL',configString)
+        testN3Store('PostgreSQL', configString)
 
 if __name__ == '__main__':
     unittest.main()

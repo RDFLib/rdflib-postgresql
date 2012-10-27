@@ -1,13 +1,14 @@
-from nose import SkipTest
 import unittest
 from rdflib_postgresql.PostgreSQL import ParseConfigurationString
 from rdflib_postgresql.PostgreSQL import GetConfigurationString
+
 
 class PostgreSQLStoreConfigTests(unittest.TestCase):
     storetest = True
     store_name = "PostgreSQL"
     create = True
-    configString="user=dog59,password=asecret,host=localhost,db=test"
+    configString = \
+        "user=dog59 password=secret host=localhost port=5432 dbname=test"
 
     def setUp(self):
         pass
@@ -16,12 +17,14 @@ class PostgreSQLStoreConfigTests(unittest.TestCase):
         pass
 
     def test_PostgreSQL_getconfig(self):
-        dsn = "port=5432 host=localhost password=asecret user=dog59 dbname=test"
+        dsn = "port=5432 host=localhost password=secret user=dog59 dbname=test"
         res = GetConfigurationString(self.configString)
-        assert res == dsn, repr(res)
+        assert set(res.split()) == set(dsn.split())
 
     def test_PostgreSQL_parseconfig(self):
-        kvDict = dict(user="dog59",password="asecret",host="localhost",port=5432, db="test")
+        kvDict = dict(
+            user="dog59", password="secret",
+            host="localhost", port=5432, dbname="test")
         res = ParseConfigurationString(self.configString)
         assert res == kvDict, repr(res)
 
