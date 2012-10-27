@@ -28,7 +28,11 @@
 ## (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 ## OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import psycopg2
+try:
+    import psycopg2
+    has_psycopg2 = True
+except ImportError:
+    has_psycopg2 = False
 import sys
 from rdflib.graph import Graph, QuotedGraph
 from rdflib import Literal, RDF, URIRef
@@ -180,9 +184,11 @@ class PostgreSQL(AbstractSQLStore):
     autocommit_default = False
     # _Store__node_pickler = None
 
-    def __init__(self):
+    def __init__(self, configuration=None, identifier=None):
+        if not has_psycopg2: raise ImportError("Unable to import psycopg2, store is unusable.")
+        self.__open = False
         self._Store__node_pickler = None
-        super(PostgreSQL, self).__init__()
+        super(PostgreSQL, self).__init__(configuration=configuration, identifier=identifier)
 
     def open(self, configuration, create=True):
         """
@@ -223,7 +229,7 @@ class PostgreSQL(AbstractSQLStore):
         c.close()
         for tn in [tbl % (self._internedId) for tbl in table_name_prefixes]:
             if tn not in tbls:
-                sys.stderr.write("table %s Doesn't exist\n" % (tn))
+                # sys.stderr.write("table %s Doesn't exist\n" % (tn))
                 return 0
         return 1
 
@@ -234,6 +240,10 @@ class PostgreSQL(AbstractSQLStore):
             c = self._db.cursor()
             for x in CREATE_TABLE_STMTS:
                 c.execute(x % (self._internedId))
+            for x in ['asserted_statements', 'literal_statements',
+                      'quoted_statements', 'type_statements', 'namespace_binds']:
+                c.execute("""COMMENT ON TABLE "{}_{}" IS 'identifier: {}';""".format(
+                    self._internedId, x, self.identifier))
             for tblName, indices in INDICES:
                 for indexName, columns in indices:
                     c.execute("CREATE INDEX %s on %s (%s)" % (
