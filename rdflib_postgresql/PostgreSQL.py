@@ -54,16 +54,15 @@ from rdflib.py3compat import PY3
 from rdflib.store import NO_STORE, VALID_STORE
 import logging
 
-logging.basicConfig(level=logging.ERROR, format="%(message)s")
-_logger = logging.getLogger(__name__)
-_logger.setLevel(logging.ERROR)
-
 
 def bb(u):
     return u.encode('utf-8')
 
 Any = None
 
+def _debug(*args, **kw):
+    logger = logging.getLogger(__name__)
+    logger.debug(*args, **kw)
 
 def ParseConfigurationString(config_string):
     """
@@ -286,12 +285,12 @@ class PostgreSQL(AbstractSQLStore):
         #     except Exception, errmsg:
         #         sys.stderr.write(
         #           "unable to drop table: %s (%s)\n" % (fullname, errmsg))
-        #         #_logger.debug(
+        #         #_debug(
         #           "unable to drop table: %s (%s)" % (fullname, errmsg))
         # sys.stderr.write("Dropping indices\n")
         # for tblName, indices in INDICES:
         #     for indexName, columns in indices:
-        #         sys.stderr.write(
+        #         _debug(
         #           "Dropping index %s\n" % (indexName % self._internedId))
         #         try:
         #             c.execute("DROP INDEX IF EXISTS %s CASCADE" % (
@@ -300,29 +299,27 @@ class PostgreSQL(AbstractSQLStore):
         #             sys.stderr.write(
         #               "unable to drop index: %s\n" % (
         #                       indexName % self._internedId))
-        #             _logger.debug(
+        #             _debug(
         #                   "unable to drop index: %s" % (
         #                           indexName % self._internedId))
-        # sys.stderr.write("calling db_commit\n")
+        # _debug("calling db_commit\n")
         # db.commit()
-        # sys.stderr.write("calling c.close'\n")
+        # _debug("calling c.close'\n")
         # c.close()
-        # sys.stderr.write("calling db.close'\n")
+        # _debug("calling db.close'\n")
         # db.close()
-        # sys.stderr.write("Leaving 'destroy'\n")
+        # _debug("Leaving 'destroy'\n")
 
-        _logger.debug(
-            "Destroyed Close World Universe %s in PostgreSQL database %s" %
-            (self.identifier, configuration))
+        _debug("Destroyed Close World Universe %s in PostgreSQL database %s",
+               self.identifier, configuration)
 
     def EscapeQuotes(self, qstr):
         """
-        Overridden because PostgreSQL is in its own quoting world
+        Overridden because executeSQL uses PostgreSQL's dollar-quoted strings
         """
         if qstr is None:
             return ''
-        tmp = qstr.replace("'", "''")
-        return tmp
+        return qstr
 
     # copied and pasted primarily to use the local unionSELECT instead
     # of the one provided by AbstractSQLStore
@@ -795,7 +792,7 @@ class PostgreSQL(AbstractSQLStore):
             params = tuple([prepitem(item) for item in params])
             querystr = unicode(qStr).replace('"', "'")
             qs = querystr % params
-            _logger.debug(qs)
+            _debug(qs)
             cursor.execute(qs)
 
     def buildGenericClause(self, generic, value, tableName):
