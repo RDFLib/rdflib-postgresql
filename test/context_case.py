@@ -3,7 +3,6 @@ from rdflib import BNode
 from rdflib import ConjunctiveGraph
 from rdflib import Graph
 from rdflib import URIRef
-# logging.getLogger('sqlalchemy.engine').setLevel(logging.WARN)
 
 
 class ContextTestCase(unittest.TestCase):
