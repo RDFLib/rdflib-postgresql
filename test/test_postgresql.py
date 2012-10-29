@@ -1,4 +1,3 @@
-from nose import SkipTest
 import unittest
 import graph_case
 import context_case
@@ -20,12 +19,6 @@ class PostgreSQLContextTestCase(context_case.ContextTestCase):
     storetest = True
     path = configString
     create = True
-
-    # def testLenInMultipleContexts(self):
-    #     raise SkipTest("Known issue.")
-
-    # def testConjunction(self):
-    #     raise SkipTest("Known issue.")
 
 
 class PostgreSQLStoreTests(unittest.TestCase):
