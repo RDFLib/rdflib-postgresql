@@ -34,6 +34,9 @@ try:
 except ImportError:
     has_psycopg2 = False
 import sys
+import itertools
+import random
+import string
 from rdflib.graph import Graph, QuotedGraph
 from rdflib import Literal, RDF, URIRef
 from rdfextras.store.REGEXMatching import NATIVE_REGEX, REGEXTerm
@@ -60,9 +63,11 @@ def bb(u):
 
 Any = None
 
+
 def _debug(*args, **kw):
     logger = logging.getLogger(__name__)
     logger.debug(*args, **kw)
+
 
 def ParseConfigurationString(config_string):
     """
@@ -184,10 +189,12 @@ class PostgreSQL(AbstractSQLStore):
     # _Store__node_pickler = None
 
     def __init__(self, configuration=None, identifier=None):
-        if not has_psycopg2: raise ImportError("Unable to import psycopg2, store is unusable.")
+        if not has_psycopg2:
+            raise ImportError("Unable to import psycopg2, store is unusable.")
         self.__open = False
         self._Store__node_pickler = None
-        super(PostgreSQL, self).__init__(configuration=configuration, identifier=identifier)
+        super(PostgreSQL, self).__init__(
+                configuration=configuration, identifier=identifier)
 
     def open(self, configuration, create=True):
         """
@@ -240,8 +247,10 @@ class PostgreSQL(AbstractSQLStore):
             for x in CREATE_TABLE_STMTS:
                 c.execute(x % (self._internedId))
             for x in ['asserted_statements', 'literal_statements',
-                      'quoted_statements', 'type_statements', 'namespace_binds']:
-                c.execute("""COMMENT ON TABLE "{}_{}" IS 'identifier: {}';""".format(
+                      'quoted_statements', 'type_statements',
+                      'namespace_binds']:
+                c.execute(
+                    """COMMENT ON TABLE "{}_{}" IS 'identifier: {}';""".format(
                     self._internedId, x, self.identifier))
             for tblName, indices in INDICES:
                 for indexName, columns in indices:
@@ -780,10 +789,13 @@ class PostgreSQL(AbstractSQLStore):
             if isinstance(item, int) or item == 'NULL':
                 return item
             else:
+                tag = [random.choice(string.ascii_lowercase)
+                            for dummy in itertools.repeat(None, 5)]
+                tag = '$%s$' % ''.join(tag)
                 try:
-                    return u"$$%s$$" % item.decode('utf-8')
+                    return u"%s%s%s" % (tag, item.decode('utf-8'), tag)
                 except:
-                    return u"$$%s$$" % item
+                    return u"%s%s%s" % (tag, item, tag)
         if not params:
             cursor.execute(unicode(qStr))
         elif paramList:
