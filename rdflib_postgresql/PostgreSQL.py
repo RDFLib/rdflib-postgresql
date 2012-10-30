@@ -281,46 +281,46 @@ class PostgreSQL(AbstractSQLStore):
         # sys.stderr.write("Entering 'destroy'\n")
         self.init_db(configuration=configuration)
         # sys.stderr.write("Connecting to db %s\n" % (configuration))
-        # db = psycopg2.connect(GetConfigurationString(configuration))
+        db = psycopg2.connect(GetConfigurationString(configuration))
         # sys.stderr.write("Opening cursor\n")
-        # c = db.cursor()
+        c = db.cursor()
         # sys.stderr.write("Dropping tables\n")
-        # for tblname in table_name_prefixes:
-        #     fullname = tblname % self._internedId
-        #     sys.stderr.write("Dropping table %s\n" % fullname)
-        #     try:
-        #         c.execute("DROP TABLE IF EXISTS %s CASCADE" % fullname)
-        #         sys.stderr.write("Table: %s dropped\n" % (fullname))
-        #     except Exception, errmsg:
-        #         sys.stderr.write(
-        #           "unable to drop table: %s (%s)\n" % (fullname, errmsg))
-        #         #_debug(
-        #           "unable to drop table: %s (%s)" % (fullname, errmsg))
+        for tblname in table_name_prefixes:
+            fullname = tblname % self._internedId
+            # sys.stderr.write("Dropping table %s\n" % fullname)
+            try:
+                c.execute("DROP TABLE IF EXISTS %s CASCADE" % fullname)
+                # sys.stderr.write("Table: %s dropped\n" % (fullname))
+            except Exception, errmsg:
+                sys.stderr.write(
+                  "unable to drop table: %s (%s)\n" % (fullname, errmsg))
+                # _debug(
+                #   "unable to drop table: %s (%s)" % (fullname, errmsg))
         # sys.stderr.write("Dropping indices\n")
-        # for tblName, indices in INDICES:
-        #     for indexName, columns in indices:
-        #         _debug(
-        #           "Dropping index %s\n" % (indexName % self._internedId))
-        #         try:
-        #             c.execute("DROP INDEX IF EXISTS %s CASCADE" % (
-        #                                 (indexName % self._internedId)))
-        #         except Exception, errmsg:
-        #             sys.stderr.write(
-        #               "unable to drop index: %s\n" % (
-        #                       indexName % self._internedId))
-        #             _debug(
-        #                   "unable to drop index: %s" % (
-        #                           indexName % self._internedId))
+        for tblName, indices in INDICES:
+            for indexName, columns in indices:
+                # _debug(
+                #  "Dropping index %s\n" % (indexName % self._internedId))
+                try:
+                    c.execute("DROP INDEX IF EXISTS %s CASCADE" % (
+                                        (indexName % self._internedId)))
+                except Exception, errmsg:
+                    sys.stderr.write(
+                      "unable to drop index: %s\n" % (
+                              indexName % self._internedId))
+                #     _debug(
+                #           "unable to drop index: %s" % (
+                #                   indexName % self._internedId))
         # _debug("calling db_commit\n")
-        # db.commit()
+        db.commit()
         # _debug("calling c.close'\n")
-        # c.close()
+        c.close()
         # _debug("calling db.close'\n")
-        # db.close()
+        db.close()
         # _debug("Leaving 'destroy'\n")
 
-        _debug("Destroyed Close World Universe %s in PostgreSQL database %s",
-               self.identifier, configuration)
+        # _debug("Destroyed Close World Universe %s in PostgreSQL database %s",
+        #        self.identifier, configuration)
 
     def EscapeQuotes(self, qstr):
         """
@@ -628,9 +628,12 @@ class PostgreSQL(AbstractSQLStore):
             ]
             q = unionSELECT(selects, distinct=False, selectType=COUNT_SELECT)
 
+        # sys.stderr.write("__len__")
+
         self.executeSQL(c, self._normalizeSQLCmd(q), parameters)
         rt = c.fetchall()
         c.close()
+        # sys.stderr.write("\n%s\n" % str([r[0] for r in rt]))
         return reduce(lambda x, y: x + y, [rtTuple[0] for rtTuple in rt])
 
     def contexts(self, triple=None):
@@ -797,6 +800,7 @@ class PostgreSQL(AbstractSQLStore):
                 except:
                     return u"%s%s%s" % (tag, item, tag)
         if not params:
+            # sys.stderr.write("\n%s\n" % qStr)
             cursor.execute(unicode(qStr))
         elif paramList:
             raise Exception("Not supported!")
@@ -804,7 +808,7 @@ class PostgreSQL(AbstractSQLStore):
             params = tuple([prepitem(item) for item in params])
             querystr = unicode(qStr).replace('"', "'")
             qs = querystr % params
-            _debug(qs)
+            # sys.stderr.write("\n%s\n" % qs)
             cursor.execute(qs)
 
     def buildGenericClause(self, generic, value, tableName):
