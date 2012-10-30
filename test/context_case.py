@@ -130,12 +130,7 @@ class ContextTestCase(unittest.TestCase):
 
         # addStuffInMultipleContexts is adding the same triple to
         # three different contexts. So it's only + 1
-        # self.assertEquals(len(self.graph), oldLen + 1)
-
-        # GJH: It seems to be counting nodes rather than statements?
-        self.assertEquals(len(list(
-                self.graph.triples((None, None, None)))), oldLen + 1)
-
+        self.assertEquals(len(self.graph), oldLen + 1)
         graph = Graph(self.graph.store, self.c1)
         self.assertEquals(len(graph), oldLen + 1)
 
