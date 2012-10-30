@@ -23,7 +23,8 @@ Example
     from rdflib.store import Store, VALID_STORE, NO_STORE
 
     # Set database DSN, follow the format below, see psycopg2
-    # documentation for details
+    # documentation for details ...
+    # http://initd.org/psycopg/docs/module.html#psycopg2.connect
     dsn = "user=gjh password=50uthf0rk host=localhost dbname=test"
 
     # Set a store identifier, can also be a URI, if preferred.
