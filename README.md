@@ -1,6 +1,6 @@
-PostgreSQL :: a formula-aware RDFLib Store based on AbstractSQLStore
+PostgreSQL :: a formula-aware RDFLib 3 Store based on AbstractSQLStore
 
-PostgreSQL RDFLib Store, formula-aware implementation. It stores its
+PostgreSQL RDFLib 3 Store, formula-aware implementation. It stores its
 triples in the following partitions (per AbstractSQLStore):
 
 * Asserted non rdf:type statements
@@ -10,3 +10,5 @@ triples in the following partitions (per AbstractSQLStore):
 * All Quoted statements
 
 In addition it persists namespace mappings in a separate table
+
+Requires RDFLib 3.
