@@ -8,10 +8,6 @@ python:
 install:
     - pip install -r requirements.txt --use-mirrors
     - python setup.py install
-env:
-  - DB=pgsql
-  - DBNAME=rdflibpostgresql_test
-  - DBUSER=postgres
 before_script:
   - sh -c "if [ '$DB' = 'pgsql' ]; then psql -c 'DROP DATABASE IF EXISTS rdflibpostgresql_test;' -U postgres; fi"
   - psql -c 'create database rdflibpostgresql_test;' -U postgres
