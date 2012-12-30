@@ -1,0 +1,25 @@
+# http://travis-ci.org/#!/gjhiggins/rdflib-postgresql
+language: python
+python:
+    - 2.5
+    - 2.6
+    - 2.7
+    - 3.2
+install:
+    - pip install -r requirements.txt --use-mirrors
+    - python setup.py install
+env:
+  - DB=pgsql
+  - DBNAME=rdflibpostgresql_test
+  - DBUSER=postgres
+before_script:
+  - sh -c "if [ '$DB' = 'pgsql' ]; then psql -c 'DROP DATABASE IF EXISTS rdflibpostgresql_test;' -U postgres; fi"
+  - psql -c 'create database rdflibpostgresql_test;' -U postgres
+script:
+    # Must cd somewhere else so python3 doesn't get confused and run
+    # the python2 code from the current directory instead of the installed
+    # 2to3 version.
+    - if [[ $TRAVIS_PYTHON_VERSION == '2.5' ]]; then nosetests; fi
+    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then nosetests; fi
+    - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then nosetests; fi
+    - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then nosetests --where=./build/src; fi

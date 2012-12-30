@@ -1,0 +1,3 @@
+git+https://github.com/RDFLib/rdflib.git#egg=rdflib
+git+https://github.com/RDFLib/rdfextras.git#egg=rdfextras
+psycopg2
