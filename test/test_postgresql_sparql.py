@@ -7,7 +7,7 @@ from rdflib.graph import Graph
 
 
 default_graph_uri = "http://example.com/"
-configString = "user=gjh password=50uthf0rk host=localhost dbname=test"
+configString = "user=postgresql dbname=rdflibpostgresql_test"
 pgstore = plugin.get('PostgreSQL', Store)(identifier="rdflibtest")
 graph = Graph(store=pgstore,
               identifier=URIRef(default_graph_uri))

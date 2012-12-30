@@ -5,7 +5,7 @@ import context_case
 from n3_2_case import testN3Store
 from rdflib.graph import Graph
 
-configString = "user=gjh password=50uthf0rk host=localhost dbname=test"
+configString = "user=postgresql dbname=rdflibpostgresql_test"
 
 
 class PostgreSQLGraphTestCase(graph_case.GraphTestCase):

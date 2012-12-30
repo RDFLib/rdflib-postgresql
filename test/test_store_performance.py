@@ -76,7 +76,8 @@ class PostgreSQLStoreTestCase(StoreTestCase):
 
     def setUp(self):
         self.store = "PostgreSQL"
-        self.path = 'user=gjh,password=50uthf0rk,host=localhost,db=test"'
+        self.path = \
+            "user=postgresql dbname=rdflibpostgresql_test"
         StoreTestCase.setUp(self)
 
 if __name__ == '__main__':
