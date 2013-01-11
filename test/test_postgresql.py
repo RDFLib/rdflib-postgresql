@@ -1,11 +1,14 @@
 import unittest
+import os
 from nose.exc import SkipTest
 import graph_case
 import context_case
 from n3_2_case import testN3Store
 from rdflib.graph import Graph
 
-configString = "user=postgresql dbname=rdflibpostgresql_test"
+configString = os.environ.get(
+    'DBURI',
+    'postgresql+psycopg2://postgres@localhost/rdflibpostgresql_test')
 
 
 class PostgreSQLGraphTestCase(graph_case.GraphTestCase):

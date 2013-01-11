@@ -76,8 +76,9 @@ class PostgreSQLStoreTestCase(StoreTestCase):
 
     def setUp(self):
         self.store = "PostgreSQL"
-        self.path = \
-            "user=postgresql dbname=rdflibpostgresql_test"
+        self.path = os.environ.get(
+            'DBURI',
+            'postgresql+psycopg2://postgres@localhost/rdflibpostgresql_test')
         StoreTestCase.setUp(self)
 
 if __name__ == '__main__':

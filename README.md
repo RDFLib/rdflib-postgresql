@@ -15,7 +15,7 @@ Requires RDFLib 3.
 
 Install with:
 
-    $ pip install rdflib_sparqlstore
+    $ pip install rdflib_postgresql
 
 Basic usage:
 
@@ -34,4 +34,4 @@ Basic usage:
     >>> g.close()
     >>> 
 
-[![Build Status](https://travis-ci.org/gjhiggins/rdflib-postgresql.png?branch=master)](https://travis-ci.org/gjhiggins/rdflib-postgresql)
+[![Build Status](https://travis-ci.org/RDFLib/rdflib-postgresql.png?branch=master)](https://travis-ci.org/RDFLib/rdflib-postgresql)
