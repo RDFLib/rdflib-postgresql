@@ -76,9 +76,10 @@ class PostgreSQLStoreTestCase(StoreTestCase):
 
     def setUp(self):
         self.store = "PostgreSQL"
+        # CONNSTR default below is Travis-CI config
         self.path = os.environ.get(
-            'DBURI',
-            'postgresql+psycopg2://postgres@localhost/rdflibpostgresql_test')
+            'CONNSTR',
+            "user=postgresql host=127.0.0.1 dbname=rdflibpostgresql_test")
         StoreTestCase.setUp(self)
 
 if __name__ == '__main__':

@@ -8,9 +8,10 @@ from rdflib.graph import Graph
 
 default_graph_uri = "http://example.com/"
 
+# CONNSTR default is Travis-CI config
 configString = os.environ.get(
-  'DBURI',
-  'postgresql+psycopg2://postgres@localhost/rdflibpostgresql_test')
+  'CONNSTR',
+  "user=postgresql host=127.0.0.1 dbname=rdflibpostgresql_test")
 
 pgstore = plugin.get('PostgreSQL', Store)(identifier="rdflibtest")
 graph = Graph(store=pgstore,

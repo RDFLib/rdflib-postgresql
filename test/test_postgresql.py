@@ -6,9 +6,10 @@ import context_case
 from n3_2_case import testN3Store
 from rdflib.graph import Graph
 
+# CONNSTR default is Travis-CI config
 configString = os.environ.get(
-    'DBURI',
-    'postgresql+psycopg2://postgres@localhost/rdflibpostgresql_test')
+    'CONNSTR',
+    "user=postgresql host=127.0.0.1 dbname=rdflibpostgresql_test")
 
 
 class PostgreSQLGraphTestCase(graph_case.GraphTestCase):
