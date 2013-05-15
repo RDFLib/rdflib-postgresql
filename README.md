@@ -1,3 +1,11 @@
+### NOTE - this code is not maintained, and not guaranteed to work with newer versions of rdflib!
+
+For RDBMS based persistence for RDFLib we recommend you use 
+
+https://github.com/RDFLib/rdflib-sqlalchemy
+
+---
+
 PostgreSQL :: a formula-aware RDFLib Store based on AbstractSQLStore
 
 PostgreSQL RDFLib Store, formula-aware implementation. It stores its
